@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Work Book — DVLPMNT</title>
+<style>
+  :root{
+    --blue:#1B18E6; --cream:#F4EFE4; --ink:#141414; --paper:#FBF8F1;
+    --line:#E2DBCB; --muted:#6B6559; --ok:#1F7A4D;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Helvetica Neue',Arial,sans-serif; color:var(--ink);
+    background:var(--cream); line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit; cursor:pointer}
+  input,textarea{font-family:inherit; color:var(--ink)}
+  .cap{text-transform:uppercase; letter-spacing:1.5px}
+  .wrap{max-width:720px; margin:0 auto; padding:0 22px}
+
+  /* Top bar */
+  .bar{position:sticky; top:0; z-index:20; background:var(--cream); border-bottom:1px solid var(--line)}
+  .bar-in{max-width:720px; margin:0 auto; padding:12px 22px; display:flex; align-items:center; gap:14px}
+  .bar .back{background:none; border:none; color:var(--blue); font-weight:700; font-size:14px; display:flex; align-items:center; gap:4px}
+  .bar .brand{font-weight:800; letter-spacing:2px; font-size:12px; margin-left:auto}
+  .save{font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:5px; min-width:64px}
+  .save.on{color:var(--ok)}
+  .save .dot{width:7px; height:7px; border-radius:50%; background:var(--muted)}
+  .save.on .dot{background:var(--ok)}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  /* Cover */
+  #cover{min-height:100vh; background:var(--blue); color:var(--cream); display:flex; flex-direction:column; padding:34px 0}
+  #cover .brand{font-weight:800; letter-spacing:3px; font-size:13px}
+  #cover .title{font-weight:800; line-height:.9; letter-spacing:-2px; font-size:clamp(60px,16vw,120px); margin-top:auto}
+  #cover .sub{font-weight:700; font-size:clamp(18px,4vw,24px); margin-top:18px}
+  #cover .lede{font-size:15px; opacity:.9; margin-top:22px; max-width:460px}
+  .field{margin-top:14px}
+  .field label{display:block; font-size:12px; font-weight:700; letter-spacing:1px; margin-bottom:6px}
+  #cover input{width:100%; max-width:460px; height:46px; border:none; border-radius:8px; padding:0 14px; font-size:15px; background:var(--cream)}
+  .btn{background:var(--ink); color:var(--cream); border:none; height:50px; border-radius:8px; font-weight:800; font-size:15px; letter-spacing:.5px; padding:0 26px}
+  .btn.blue{background:var(--blue); color:var(--cream)}
+  .btn.ghost{background:transparent; border:1.5px solid currentColor}
+  .btn.pale{background:var(--cream); color:var(--ink)}
+  .btn.wide{width:100%; max-width:460px}
+  #cover .btn{margin-top:14px}
+  .privacy{font-size:12px; opacity:.75; margin-top:14px; max-width:460px}
+
+  /* Path */
+  #path{padding:30px 0 60px}
+  .eyebrow{font-weight:700; letter-spacing:2px; font-size:12px; color:var(--blue)}
+  .h1{font-weight:800; font-size:clamp(34px,8vw,52px); line-height:.98; letter-spacing:-1px; margin:6px 0}
+  .greet{color:var(--muted); font-size:15px; margin-bottom:22px}
+  .weeks{display:flex; flex-direction:column; gap:12px}
+  .wk{border-radius:14px; padding:18px; border:1px solid var(--line); background:var(--paper); display:flex; align-items:center; gap:16px; text-align:left; width:100%}
+  .wk.open{background:var(--blue); color:var(--cream); border-color:var(--blue)}
+  .wk.done{background:#EAF4EE; border-color:#CDE7D8}
+  .wk .num{font-weight:800; font-size:26px; opacity:.5; min-width:34px}
+  .wk.open .num{opacity:.7}
+  .wk .meta{flex:1}
+  .wk .kick{font-size:11px; font-weight:700; letter-spacing:1.5px; opacity:.8}
+  .wk .name{font-weight:800; font-size:22px; line-height:1.05; margin-top:2px}
+  .wk .status{font-size:12px; font-weight:700}
+  .wk .chev{font-size:22px; opacity:.6}
+  .wk[disabled]{cursor:default; opacity:.55}
+
+  /* Week / step */
+  #week{padding-bottom:80px}
+  .step{padding:26px 0}
+  .progress{height:5px; background:var(--line); border-radius:3px; overflow:hidden; margin:6px 0 4px}
+  .progress > i{display:block; height:100%; background:var(--blue); border-radius:3px; transition:width .25s}
+  .stepmeta{display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; letter-spacing:1px}
+  .stepmeta .l{color:var(--blue)}
+  .stepmeta .r{color:var(--muted)}
+
+  .reading .eyebrow{margin-bottom:2px}
+  .reading h2{font-weight:800; font-size:clamp(28px,6vw,40px); line-height:1.02; letter-spacing:-.5px; margin:2px 0 16px}
+  .reading p{margin:0 0 14px; font-size:16px; color:#2c2820}
+  .reading .pull{font-weight:800; font-size:20px; line-height:1.3; color:var(--blue); margin:18px 0}
+
+  .q{font-weight:800; font-size:clamp(22px,5vw,28px); line-height:1.15; margin-bottom:8px}
+  .hint{color:var(--muted); font-size:14px; margin-bottom:14px}
+  textarea{width:100%; min-height:150px; border:1px solid var(--line); border-radius:12px; padding:14px; font-size:16px; line-height:1.6; background:var(--paper); resize:vertical}
+  textarea:focus, input:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(27,24,230,.12)}
+  .stem{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; font-size:20px; font-weight:700; line-height:2}
+  .stem input{border:none; border-bottom:2px solid var(--blue); background:transparent; font-size:20px; font-weight:800; min-width:130px; text-align:center; padding:2px 8px}
+  .multi .mf{margin-bottom:18px}
+  .multi .mf label{display:block; font-weight:700; font-size:15px; margin-bottom:6px}
+  .multi textarea{min-height:90px}
+
+  .rows{display:flex; flex-direction:column; gap:12px}
+  .row{border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--paper); position:relative}
+  .row .rn{position:absolute; top:10px; right:12px; font-size:12px; font-weight:800; color:var(--muted)}
+  .row .cell{margin-bottom:8px}
+  .row .cell:last-child{margin-bottom:0}
+  .row .cell label{display:block; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); margin-bottom:4px}
+  .row input, .row textarea{width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:14px; background:#fff}
+  .row textarea{min-height:60px}
+  .row .del{position:absolute; bottom:10px; right:12px; background:none; border:none; color:#b23; font-size:12px; font-weight:700}
+  .addrow{background:transparent; border:1.5px dashed var(--blue); color:var(--blue); border-radius:10px; padding:11px; font-weight:800; font-size:14px; width:100%; margin-top:4px}
+  .counter{font-size:12px; font-weight:700; color:var(--muted); margin-top:8px}
+  .counter.met{color:var(--ok)}
+
+  .nav{display:flex; gap:10px; margin-top:22px}
+  .nav .btn{flex:1}
+  .nav .btn.next{flex:2}
+
+  /* Complete */
+  #done{min-height:100vh; background:var(--blue); color:var(--cream); display:flex; flex-direction:column; justify-content:center; padding:40px 0}
+  #done .big{font-weight:800; font-size:clamp(44px,12vw,84px); line-height:.9; letter-spacing:-2px; margin:8px 0 18px}
+  #done p{font-size:16px; opacity:.92; max-width:460px; margin-bottom:10px}
+  #done .btn{max-width:460px}
+  #sendstate{font-size:13px; font-weight:700; margin-top:6px; opacity:.9}
+
+  .foot{padding:26px 0 40px; text-align:center; color:var(--muted); font-size:12px}
+  .link{background:none; border:none; color:var(--blue); font-weight:700; text-decoration:underline; font-size:13px}
+  @media print{ .bar,.nav,.addrow,.del{display:none} .view{display:block!important} }
+</style>
+</head>
+<body>
+
+<!-- Top bar (hidden on cover/done) -->
+<div class="bar" id="bar" style="display:none">
+  <div class="bar-in">
+    <button class="back" id="barBack">&#8249; Path</button>
+    <div class="save" id="saveInd"><span class="dot"></span><span id="saveTxt">Saved</span></div>
+    <div class="brand">DVLPMNT</div>
+  </div>
+</div>
+
+<!-- COVER -->
+<section class="view active" id="cover">
+  <div class="wrap" style="display:flex; flex-direction:column; flex:1; min-height:calc(100vh - 68px)">
+    <div class="brand">DVLPMNT</div>
+    <div class="title">THE<br>WORK<br>BOOK</div>
+    <div class="sub">Build the future.<br>Don't wait for it.</div>
+    <p class="lede">A six-week guided journey. Read, reflect, and do the work — your writing is saved as you go, and each week reaches your coach before your session.</p>
+    <div class="field">
+      <label for="cName">Your name</label>
+      <input id="cName" type="text" placeholder="First and last name" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="cEmail">Your email</label>
+      <input id="cEmail" type="email" placeholder="name@email.com" autocomplete="email">
+    </div>
+    <button class="btn wide" id="beginBtn">BEGIN THE WORK</button>
+    <p class="privacy">Your email keeps your work saved on this device so you can return anytime. No password needed.</p>
+  </div>
+</section>
+
+<!-- PATH -->
+<section class="view" id="path">
+  <div class="wrap">
+    <div class="eyebrow">YOUR PATH</div>
+    <div class="h1">The Work</div>
+    <div class="greet" id="greet"></div>
+    <div class="weeks" id="weeksList"></div>
+    <div class="foot">
+      <div>© 2025 Johan Martinez-Khalilian · dvlpmnt.studio</div>
+      <div style="margin-top:8px"><button class="link" id="exportAll">Download my whole workbook (PDF)</button></div>
+      <div style="margin-top:6px"><button class="link" id="signout">Not you? Start fresh</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- WEEK -->
+<section class="view" id="week">
+  <div class="wrap">
+    <div class="step" id="stepHost"></div>
+  </div>
+</section>
+
+<!-- DONE -->
+<section class="view" id="done">
+  <div class="wrap">
+    <div class="cap" style="font-weight:700; letter-spacing:2px; font-size:12px; opacity:.8" id="doneKick">WEEK ONE</div>
+    <div class="big">Week<br>complete.</div>
+    <p id="doneMsg">Your writing has been sent to your coach — they'll have it before your session.</p>
+    <p>Your copy is saved on this device. Come back anytime to keep going or revisit what you wrote.</p>
+    <div id="sendstate"></div>
+    <button class="btn pale wide" id="downloadWeek" style="margin-top:18px">DOWNLOAD MY COPY (PDF)</button>
+    <button class="btn ghost wide" id="toPath" style="margin-top:10px">BACK TO PATH</button>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   CONFIG
+   Paste your Airtable automation webhook URL between the quotes.
+   Until then, the app runs fully and keeps a local copy; it just
+   won't send to the coach. Everything else works.
+   ============================================================ */
+var WEBHOOK_URL = "";
+var COACH_NAME  = "your coach";
+
+/* ---------- Content schema ---------- */
+var WEEKS = [
+  {
+    n:1, title:"Vision",
+    reading:{
+      eyebrow:"WEEK ONE · READ", h:"The Necessity of Vision",
+      body:[
+        "Every journey begins with a destination. You wouldn't board a plane without knowing where it's going — yet in life we often do exactly that. We stay busy, we react, we manage, but we never set the destination.",
+        "Vision is that destination. It's what gives your actions direction and your choices meaning. Without vision, even your best efforts feel scattered. With it, the same actions become purposeful.",
+        {pull:"Vision is not fantasy. True vision stays rooted in reality while pulling you forward into what's possible."},
+        "This week is about uncovering the vision that's already in you — and making it clear, specific, and measurable. A goal is a dream with a deadline. Get honest, get concrete, and put it on the clock."
+      ]
+    },
+    prompts:[
+      {id:"vision", type:"text", q:"Declare your vision for the next six weeks.", hint:"What are you committed to making real? What do you see for your future, six weeks from today?", ph:"Six weeks from now…"},
+      {id:"goals", type:"rows", q:"Set your specific goals.", hint:"List at least 10 goals that will realize your vision. Make each specific, and tie it to a “by when” date.", min:10, cols:[
+        {key:"goal", label:"Goal", ph:"e.g. Complete my certification", wide:true},
+        {key:"by", label:"By when", ph:"July 1"},
+        {key:"why", label:"This goal matters because…", ph:"Why it matters to your life and values", wide:true}
+      ]},
+      {id:"internal", type:"multi", q:"Listen to your internal conversations.", hint:"Notice what you're telling yourself about you, your goals, and your ability to succeed.", fields:[
+        {key:"empower", label:"Which conversations will empower you?", ph:""},
+        {key:"limit", label:"Which ones might limit you?", ph:""},
+        {key:"interrupt", label:"Which limiting conversations are you committed to interrupt?", ph:""}
+      ]},
+      {id:"share", type:"text", q:"Share your vision.", hint:"Choose two people you trust and share your vision with each of them individually. Ask for their feedback, and capture what they said here.", ph:"Who I shared with, and what they reflected back…"}
+    ]
+  },
+  {
+    n:2, title:"Current Reality",
+    reading:{
+      eyebrow:"WEEK TWO · READ", h:"Discovering Current Reality",
+      body:[
+        "If vision is your destination, current reality is your starting point. You can't chart a path forward without getting honest about where you are now — the external facts, and the inner terrain of beliefs, patterns, and intentions.",
+        {pull:"What you resist, persists. But what you're willing to face, what you surrender to, transforms."},
+        "One of the clearest ways to see where you're resisting reality is to look at what you're avoiding — the things you've been tolerating as “undone.” The more you complete, the more energy you free up for your vision."
+      ]
+    },
+    prompts:[
+      {id:"tolerations", type:"rows", q:"Create your toleration list.", hint:"Write down at least 26 things you're currently tolerating as undone — through avoidance or procrastination.", min:26, cols:[
+        {key:"item", label:"Toleration", ph:"e.g. Unfiled taxes", wide:true},
+        {key:"unfinished", label:"The unfinished business tied to it", ph:"", wide:true},
+        {key:"cost", label:"The long-term cost of leaving it", ph:"", wide:true}
+      ]},
+      {id:"patterns", type:"text", q:"Notice the patterns.", hint:"Look over your list. Do themes repeat — finances, health, relationships, clutter, communication? What are you discovering about what you leave undone?", ph:""},
+      {id:"cost", type:"text", q:"Count the cost and name the reward.", hint:"How do these weigh on your mind, drain your energy, or block your vision? Then name the payoff of completing them — be specific.", ph:""},
+      {id:"interrupt", type:"rows", q:"Choose what to interrupt.", hint:"Decide which tolerations you're willing to complete, and map them out.", min:3, cols:[
+        {key:"tol", label:"Toleration", ph:"", wide:true},
+        {key:"actions", label:"Actions to complete", ph:"", wide:true},
+        {key:"by", label:"By when"},
+        {key:"reward", label:"Rewards", ph:"", wide:true}
+      ]},
+      {id:"beliefs", type:"text", q:"Reflect on beliefs and intentions.", hint:"What beliefs, assumptions, or hidden intentions do these tolerations reveal? How have they shaped the results you have now?", ph:""}
+    ]
+  },
+  {
+    n:3, title:"What's Wanted & Needed",
+    reading:{
+      eyebrow:"WEEK THREE · READ", h:"Way of Being",
+      body:[
+        "Between where you are and where you're going is a gap. The question that moves you across it is simple: what's wanted and needed? Ask it with curiosity, not judgment — it's about information, not blame.",
+        {pull:"Your old way of being is perfectly designed to keep recreating your current reality. A new way of being opens the door to the future you envision."},
+        "Attitude is a choice, and every choice has a payoff and a cost. This week you'll name the attitudes that have held you back, and declare a new way of being that will carry you forward."
+      ]
+    },
+    prompts:[
+      {id:"old", type:"stem", q:"Name the old attitudes.", hint:"Choose three words that capture the ineffective or disempowering attitudes you've sometimes carried.", pre:"Up until now, I have been", blanks:3, post:"."},
+      {id:"payoffs", type:"text", q:"Identify the payoffs.", hint:"What short-term benefits have you received from these old attitudes? Be honest.", ph:"The payoffs I have gotten for being this way are…"},
+      {id:"costs", type:"text", q:"Name the costs.", hint:"What has it cost you — in your life, family, work, relationships, community — to keep showing up this way?", ph:"The costs to me, my family, and my community have included…"},
+      {id:"new", type:"stem", q:"Declare a new way of being.", hint:"Choose three words that describe the new way of being that's wanted and needed.", pre:"From now on, I declare that I am", blanks:3, post:"."},
+      {id:"price", type:"text", q:"Acknowledge the price.", hint:"Every new way of being comes with a cost. What are you willing to pay to live into it?", ph:"The prices I am willing to pay for being in this new way include…"},
+      {id:"rewards", type:"text", q:"Claim the rewards.", hint:"Imagine the long-term benefits. What will shift for you, your family, and your community?", ph:"The rewards for me, for my family, and for my community will include…"}
+    ]
+  },
+  {
+    n:4, title:"The Freedom of Forgiveness",
+    reading:{
+      eyebrow:"WEEK FOUR · READ", h:"The Discipline of Forgiveness",
+      body:[
+        "Some beliefs and judgments can't be dropped one at a time. They're held together by a deeper strategy: unforgiveness. It keeps you tethered to the past and quietly undermines your vision.",
+        {pull:"Forgiveness is a choice — to feel the hurt without letting it define you. What you surrender to, transforms."},
+        "Forgiveness isn't minimizing, justifying, or denying what happened. It's naming it honestly, then releasing it. This week you'll do that work directly."
+      ]
+    },
+    prompts:[
+      {id:"name", type:"rows", q:"Name the unforgiveness.", hint:"Identify at least 10 people toward whom you've carried unforgiveness.", min:10, cols:[
+        {key:"person", label:"Person", ph:"Name or initials"},
+        {key:"what", label:"What happened?", ph:"", wide:true},
+        {key:"judgment", label:"What judgments have you made?", ph:"", wide:true},
+        {key:"pattern", label:"Repetitive patterns connected to this bitterness", ph:"", wide:true}
+      ]},
+      {id:"work", type:"rows", q:"Do the work of forgiveness.", hint:"From your list, choose at least 5 people you're willing to forgive, and work each one.", min:5, cols:[
+        {key:"person", label:"Whom are you willing to forgive?", ph:"Name directly"},
+        {key:"retell", label:"Retell the story responsibly — where do you own your part?", ph:"", wide:true},
+        {key:"belief", label:"What new belief will you choose (as true or truer)?", ph:"", wide:true},
+        {key:"behavior", label:"What new behaviors will you take on?", ph:"", wide:true}
+      ]},
+      {id:"possible", type:"text", q:"Identify the possibilities.", hint:"What has forgiveness made possible? What new ways of thinking, relating, or responding are open now? What energy has been released back into your vision?", ph:""}
+    ]
+  },
+  {
+    n:5, title:"The Power of Commitments",
+    reading:{
+      eyebrow:"WEEK FIVE · READ", h:"Commitments and Requests",
+      body:[
+        "Now comes the step that grounds it all: action. But not just any action — promised action. A promise is action spoken forward, a declaration that binds you in honor to follow through.",
+        {pull:"Anyone can achieve anything through commitments and requests."},
+        "A request is the other side of a promise — an invitation for someone to join your vision. It must allow for both yes and no. And when you break a commitment, you don't hide it; you account for it honestly, and redeploy that power toward your future."
+      ]
+    },
+    prompts:[
+      {id:"internal", type:"text", q:"Examine your internal conversations.", hint:"What are you telling yourself about commitments — making them, keeping them, breaking them? What stories run about asking for help?", ph:""},
+      {id:"commitments", type:"rows", q:"Make commitments toward your vision.", hint:"List at least 6 commitments that will meet your goals.", min:6, cols:[
+        {key:"promise", label:"The promise", ph:"", wide:true},
+        {key:"whom", label:"To whom?"},
+        {key:"by", label:"By when?"},
+        {key:"outcome", label:"Outcome (fill in later)", ph:"", wide:true}
+      ]},
+      {id:"requests", type:"rows", q:"Make requests toward your vision.", hint:"List at least 6 requests. Remember: a request is an invitation, not a demand — it allows for yes and no.", min:6, cols:[
+        {key:"request", label:"The request", ph:"", wide:true},
+        {key:"whom", label:"Of whom?"},
+        {key:"by", label:"By when?"},
+        {key:"outcome", label:"Outcome (fill in later)", ph:"", wide:true}
+      ]},
+      {id:"broken", type:"rows", q:"Account for broken commitments.", hint:"List four commitments you've made and broken. Push past excuses to the real choice you made.", min:4, cols:[
+        {key:"commitment", label:"The broken commitment", ph:"", wide:true},
+        {key:"more", label:"What was more important to me than keeping this promise?", ph:"", wide:true}
+      ]},
+      {id:"word", type:"multi", q:"Living as your word.", hint:"Be thorough. The point isn't to look good — it's to live with integrity.", fields:[
+        {key:"destructive", label:"Any irresponsible or destructive “commitments” you have a moral obligation to break?"},
+        {key:"excused", label:"Commitments you've excused yourself from by blaming circumstances or others?"},
+        {key:"support", label:"Requests where you could support others more fully in keeping their commitments?"},
+        {key:"account", label:"Anyone you need to account to for a broken promise, so trust can be restored?"},
+        {key:"renegotiate", label:"Any outstanding commitments that need to be renegotiated?"}
+      ]}
+    ]
+  },
+  {
+    n:6, title:"Finishing Well",
+    reading:{
+      eyebrow:"WEEK SIX · READ", h:"Finishing Well",
+      body:[
+        "You've reached the final week. If you've walked this with full participation, you're not just “done” — you're arriving at the future you declared six weeks ago.",
+        {pull:"The end of all our exploring will be to arrive where we started and know the place for the first time."},
+        "Finishing well isn't finishing perfectly. It's taking honest stock of your results, celebrating the transformation, and casting a new vision — because the moment you realize a vision is the perfect moment to cast the next one."
+      ]
+    },
+    prompts:[
+      {id:"results", type:"text", q:"Take stock and celebrate.", hint:"What have you succeeded in accomplishing? What specific results have you produced? Celebrate that success.", ph:""},
+      {id:"account", type:"text", q:"Account for any broken commitments.", hint:"Did you break any commitments from Week 5? Account for them now: what was more important than keeping the promise?", ph:""},
+      {id:"transform", type:"text", q:"Name your transformation.", hint:"Over the last six weeks, how have you been transformed? What has changed in your life — and what does transformation look like moving forward? What's next?", ph:""},
+      {id:"newvision", type:"text", q:"Declare a new vision for the next six weeks.", hint:"What are you committed to making come to pass? What do you envision for your future, six weeks from today?", ph:""},
+      {id:"newgoals", type:"rows", q:"Set new goals.", hint:"Create at least 7 specific goals to realize this new vision, each with a “by when” date.", min:7, cols:[
+        {key:"goal", label:"Goal", ph:"", wide:true},
+        {key:"by", label:"By when"}
+      ]},
+      {id:"tenyear", type:"text", q:"Write your ten-year story.", hint:"Imagine it's ten years from today. Write the story of these ten years with you as the hero — where you've arrived, and what it took, including the challenges you overcame.", ph:"Ten years from now…", big:true}
+    ]
+  }
+];
+
+/* ---------- State ---------- */
+var state = { name:"", email:"", data:{}, done:{} };
+var current = { week:0, step:0 };
+var saveTimer=null;
+
+function storeKey(){ return "workbook:"+(state.email||"anon").toLowerCase(); }
+function load(){
+  try{
+    var last = localStorage.getItem("workbook:last");
+    if(last){ var raw = localStorage.getItem("workbook:"+last); if(raw){ state = JSON.parse(raw); return true; } }
+  }catch(e){}
+  return false;
+}
+function save(){
+  try{
+    localStorage.setItem(storeKey(), JSON.stringify(state));
+    localStorage.setItem("workbook:last", (state.email||"anon").toLowerCase());
+  }catch(e){}
+}
+function flagSaving(){
+  var el=document.getElementById("saveInd");
+  el.classList.remove("on"); document.getElementById("saveTxt").textContent="Saving…";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){ save(); el.classList.add("on"); document.getElementById("saveTxt").textContent="Saved"; },500);
+}
+
+/* ---------- View switching ---------- */
+function show(id){
+  document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
+  document.getElementById(id).classList.add("active");
+  document.getElementById("bar").style.display = (id==="path"||id==="week") ? "block" : "none";
+  window.scrollTo(0,0);
+}
+
+/* ---------- Path ---------- */
+function renderPath(){
+  document.getElementById("greet").textContent = state.name ? ("Welcome back, "+state.name.split(" ")[0]+".") : "";
+  var host=document.getElementById("weeksList"); host.innerHTML="";
+  WEEKS.forEach(function(w, i){
+    var done = !!state.done[w.n];
+    var prevDone = i===0 || !!state.done[WEEKS[i-1].n];
+    var open = !done && prevDone;
+    var b=document.createElement("button");
+    b.className="wk"+(done?" done":"")+(open?" open":"");
+    var status = done?"Complete":(open?"In progress":"Upcoming");
+    b.innerHTML='<div class="num">'+w.n+'</div>'+
+      '<div class="meta"><div class="kick cap">WEEK '+numword(w.n)+'</div>'+
+      '<div class="name">'+w.title+'</div>'+
+      '<div class="status" style="opacity:.8">'+status+'</div></div>'+
+      '<div class="chev">'+(done?'&#10003;':'&#8250;')+'</div>';
+    if(done || open){ b.onclick=function(){ openWeek(i); }; } else { b.setAttribute("disabled","true"); }
+    host.appendChild(b);
+  });
+}
+function numword(n){ return ["","ONE","TWO","THREE","FOUR","FIVE","SIX"][n]; }
+
+/* ---------- Week / steps ---------- */
+function openWeek(wi){
+  current.week=wi; current.step=0; show("week"); renderStep();
+}
+function totalSteps(w){ return 1 + w.prompts.length; } /* reading + prompts */
+
+function renderStep(){
+  var w=WEEKS[current.week];
+  var host=document.getElementById("stepHost");
+  var steps=totalSteps(w);
+  var pct=Math.round((current.step/(steps-1))*100);
+  var html='<div class="stepmeta"><span class="l cap">WEEK '+numword(w.n)+' · '+w.title+'</span><span class="r">'+(current.step+1)+' / '+steps+'</span></div>'+
+           '<div class="progress"><i style="width:'+pct+'%"></i></div>';
+
+  if(current.step===0){
+    var r=w.reading;
+    html+='<div class="reading" style="margin-top:18px"><div class="eyebrow cap">'+r.eyebrow+'</div><h2>'+r.h+'</h2>';
+    r.body.forEach(function(p){
+      if(typeof p==="string") html+='<p>'+p+'</p>';
+      else html+='<p class="pull">'+p.pull+'</p>';
+    });
+    html+='</div>';
+    html+='<div class="nav"><button class="btn blue next" id="nextBtn">CONTINUE TO REFLECTION</button></div>';
+  } else {
+    var p=w.prompts[current.step-1];
+    html+='<div style="margin-top:20px"><div class="q">'+p.q+'</div>'+(p.hint?'<div class="hint">'+p.hint+'</div>':'');
+    html+=renderPrompt(w,p);
+    html+='</div>';
+    var last = current.step===steps-1;
+    html+='<div class="nav"><button class="btn ghost" id="backBtn">BACK</button>'+
+          '<button class="btn blue next" id="nextBtn">'+(last?'FINISH &amp; SEND TO COACH':'NEXT')+'</button></div>';
+  }
+  host.innerHTML=html;
+  wireStep(w);
+}
+
+function val(wKey, pKey){ return (state.data[wKey]&&state.data[wKey][pKey])!==undefined ? state.data[wKey][pKey] : undefined; }
+function setVal(wKey,pKey,v){ if(!state.data[wKey]) state.data[wKey]={}; state.data[wKey][pKey]=v; flagSaving(); }
+
+function renderPrompt(w,p){
+  var wk="w"+w.n; var stored=val(wk,p.id);
+  if(p.type==="text"){
+    return '<textarea data-k="'+p.id+'" placeholder="'+(p.ph||"Start writing…")+'"'+(p.big?' style="min-height:240px"':'')+'>'+esc(stored||"")+'</textarea>';
+  }
+  if(p.type==="stem"){
+    var arr=Array.isArray(stored)?stored:["","",""];
+    var ins='';
+    for(var i=0;i<p.blanks;i++){ ins+='<input data-k="'+p.id+'" data-i="'+i+'" value="'+esc(arr[i]||"")+'" placeholder="word">'+(i<p.blanks-2?', ':(i===p.blanks-2?', and ':'')); }
+    return '<div class="stem">'+p.pre+' '+ins+' '+(p.post||"")+'</div>';
+  }
+  if(p.type==="multi"){
+    var obj=stored||{};
+    var out='<div class="multi">';
+    p.fields.forEach(function(f){ out+='<div class="mf"><label>'+f.label+'</label><textarea data-k="'+p.id+'" data-f="'+f.key+'" placeholder="'+(f.ph||"")+'">'+esc(obj[f.key]||"")+'</textarea></div>'; });
+    return out+'</div>';
+  }
+  if(p.type==="rows"){
+    var rows=Array.isArray(stored)&&stored.length?stored:[blankRow(p)];
+    var out='<div class="rows" data-k="'+p.id+'">';
+    rows.forEach(function(rw,idx){ out+=rowHtml(p,rw,idx,rows.length); });
+    out+='</div>';
+    out+='<button class="addrow" data-add="'+p.id+'">+ ADD ANOTHER</button>';
+    out+='<div class="counter" data-count="'+p.id+'"></div>';
+    return out;
+  }
+  return "";
+}
+function blankRow(p){ var o={}; p.cols.forEach(function(c){o[c.key]="";}); return o; }
+function rowHtml(p,rw,idx,total){
+  var out='<div class="row" data-idx="'+idx+'"><div class="rn">#'+(idx+1)+'</div>';
+  p.cols.forEach(function(c){
+    out+='<div class="cell"><label>'+c.label+'</label>'+
+      (c.wide?'<textarea data-c="'+c.key+'" placeholder="'+(c.ph||"")+'">'+esc(rw[c.key]||"")+'</textarea>'
+             :'<input data-c="'+c.key+'" value="'+esc(rw[c.key]||"")+'" placeholder="'+(c.ph||"")+'">')+'</div>';
+  });
+  if(total>1) out+='<button class="del" data-del="'+idx+'">Remove</button>';
+  return out+'</div>';
+}
+
+function wireStep(w){
+  var host=document.getElementById("stepHost");
+  var next=document.getElementById("nextBtn"), back=document.getElementById("backBtn");
+  if(next) next.onclick=function(){
+    var steps=totalSteps(w);
+    if(current.step===steps-1){ finishWeek(w); }
+    else { current.step++; renderStep(); }
+  };
+  if(back) back.onclick=function(){ if(current.step>0){ current.step--; renderStep(); } };
+
+  host.querySelectorAll('textarea[data-k]:not([data-f]):not([data-c]), input[data-k]:not([data-c])').forEach(function(el){
+    if(el.hasAttribute("data-i")){ /* stem */
+      el.oninput=function(){
+        var p=w.prompts[current.step-1]; var wk="w"+w.n;
+        var arr=Array.isArray(val(wk,p.id))?val(wk,p.id).slice():["","",""];
+        arr[+el.getAttribute("data-i")]=el.value; setVal(wk,p.id,arr);
+      };
+    } else if(el.tagName==="TEXTAREA" && !el.hasAttribute("data-f")){ /* plain text */
+      el.oninput=function(){ setVal("w"+w.n, el.getAttribute("data-k"), el.value); };
+    }
+  });
+  host.querySelectorAll('textarea[data-f]').forEach(function(el){ /* multi */
+    el.oninput=function(){
+      var wk="w"+w.n; var k=el.getAttribute("data-k"); var f=el.getAttribute("data-f");
+      var obj=val(wk,k)||{}; obj=Object.assign({},obj); obj[f]=el.value; setVal(wk,k,obj);
+    };
+  });
+  wireRows(w);
+}
+
+function collectRows(host, p){
+  var arr=[];
+  host.querySelectorAll('.rows[data-k="'+p.id+'"] .row').forEach(function(rowEl){
+    var o={}; rowEl.querySelectorAll('[data-c]').forEach(function(f){ o[f.getAttribute("data-c")]=f.value; }); arr.push(o);
+  });
+  return arr;
+}
+function wireRows(w){
+  var host=document.getElementById("stepHost");
+  var p=w.prompts[current.step-1]; if(!p||p.type!=="rows") return;
+  var wk="w"+w.n;
+  function refreshCount(){
+    var arr=val(wk,p.id)||[]; var filled=arr.filter(function(r){ return Object.keys(r).some(function(k){return (r[k]||"").trim();}); }).length;
+    var c=host.querySelector('[data-count="'+p.id+'"]'); if(!c) return;
+    c.textContent=filled+" of "+p.min+" added"; c.classList.toggle("met", filled>=p.min);
+  }
+  host.querySelectorAll('.rows[data-k="'+p.id+'"] [data-c]').forEach(function(f){
+    f.oninput=function(){ setVal(wk,p.id, collectRows(host,p)); refreshCount(); };
+  });
+  var add=host.querySelector('[data-add="'+p.id+'"]');
+  if(add) add.onclick=function(){
+    var arr=collectRows(host,p); arr.push(blankRow(p)); setVal(wk,p.id,arr); renderStep();
+  };
+  host.querySelectorAll('[data-del]').forEach(function(btn){
+    btn.onclick=function(){
+      var arr=collectRows(host,p); arr.splice(+btn.getAttribute("data-del"),1); if(!arr.length)arr=[blankRow(p)];
+      setVal(wk,p.id,arr); renderStep();
+    };
+  });
+  refreshCount();
+}
+
+/* ---------- Finish & send ---------- */
+function finishWeek(w){
+  state.done[w.n]=true; save();
+  document.getElementById("doneKick").textContent="WEEK "+numword(w.n);
+  document.getElementById("doneMsg").textContent="Your writing for “"+w.title+"” has been sent to "+COACH_NAME+" — they'll have it before your session.";
+  var ss=document.getElementById("sendstate"); ss.textContent="";
+  show("done");
+  sendToCoach(w, ss);
+}
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function buildPayload(w){
+  var wk="w"+w.n; var d=state.data[wk]||{};
+  var answers=[];
+  w.prompts.forEach(function(p){
+    var v=d[p.id]; var text="";
+    if(p.type==="text"){ text=v||""; }
+    else if(p.type==="stem"){ var a=v||[]; text=p.pre+" "+a.join(", ")+" "+(p.post||""); }
+    else if(p.type==="multi"){ var o=v||{}; text=p.fields.map(function(f){return f.label+"\n"+(o[f.key]||"");}).join("\n\n"); }
+    else if(p.type==="rows"){ var rows=v||[]; text=rows.map(function(r,i){ return "#"+(i+1)+" "+p.cols.map(function(c){return c.label+": "+(r[c.key]||"");}).join(" | "); }).join("\n"); }
+    answers.push({question:p.q, answer:text});
+  });
+  var pretty=answers.map(function(a){return a.question+"\n"+a.answer;}).join("\n\n————\n\n");
+  return {
+    client_name:state.name, client_email:state.email,
+    week_number:w.n, week_title:w.title,
+    submitted_at:new Date().toISOString(),
+    answers:answers, answers_text:pretty
+  };
+}
+function sendToCoach(w, ss){
+  var payload=buildPayload(w);
+  if(!WEBHOOK_URL){ ss.textContent="Saved locally. (Coach delivery activates once the webhook is connected.)"; return; }
+  ss.textContent="Sending…";
+  fetch(WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+    .then(function(r){ ss.textContent = r.ok ? "Sent to "+COACH_NAME+" ✓" : "Saved. We'll retry delivery."; })
+    .catch(function(){ ss.textContent="Saved on your device. Delivery will retry when you're online."; });
+}
+
+/* ---------- Export / print ---------- */
+function printBook(onlyWeek){
+  var win=window.open("","_blank");
+  var css='body{font-family:Georgia,serif;color:#141414;max-width:720px;margin:40px auto;padding:0 24px;line-height:1.6}h1{font-family:Arial;font-size:30px}h2{font-family:Arial;border-bottom:2px solid #1B18E6;padding-bottom:6px;margin-top:34px;color:#1B18E6}h3{font-family:Arial;font-size:16px;margin-top:20px}p{white-space:pre-wrap}.meta{color:#666;font-size:13px}';
+  var html='<html><head><title>The Work Book — '+esc(state.name)+'</title><style>'+css+'</style></head><body>';
+  html+='<h1>The Work Book</h1><div class="meta">'+esc(state.name)+' · '+esc(state.email)+'</div>';
+  WEEKS.forEach(function(w){
+    if(onlyWeek && w.n!==onlyWeek) return;
+    if(!state.data["w"+w.n] && !state.done[w.n]) return;
+    html+='<h2>Week '+w.n+' — '+w.title+'</h2>';
+    var pl=buildPayload(w);
+    pl.answers.forEach(function(a){ html+='<h3>'+esc(a.question)+'</h3><p>'+esc(a.answer||"—")+'</p>'; });
+  });
+  html+='</body></html>';
+  win.document.write(html); win.document.close(); setTimeout(function(){win.print();},300);
+}
+
+/* ---------- Boot & events ---------- */
+document.getElementById("beginBtn").onclick=function(){
+  var name=document.getElementById("cName").value.trim();
+  var email=document.getElementById("cEmail").value.trim();
+  if(!email || email.indexOf("@")<0){ alert("Please enter your email so your work can be saved."); return; }
+  var existingRaw=null;
+  try{ existingRaw=localStorage.getItem("workbook:"+email.toLowerCase()); }catch(e){}
+  if(existingRaw){ state=JSON.parse(existingRaw); if(name) state.name=name; }
+  else { state={name:name, email:email, data:{}, done:{}}; }
+  save(); renderPath(); show("path");
+};
+document.getElementById("barBack").onclick=function(){ renderPath(); show("path"); };
+document.getElementById("toPath").onclick=function(){ renderPath(); show("path"); };
+document.getElementById("downloadWeek").onclick=function(){ printBook(WEEKS[current.week].n); };
+document.getElementById("exportAll").onclick=function(){ printBook(null); };
+document.getElementById("signout").onclick=function(){
+  if(confirm("Start fresh? Your saved work stays on this device but you'll return to the welcome screen.")){
+    try{localStorage.removeItem("workbook:last");}catch(e){}
+    document.getElementById("cName").value=""; document.getElementById("cEmail").value=""; show("cover");
+  }
+};
+
+(function init(){
+  if(load()){
+    document.getElementById("cName").value=state.name||"";
+    document.getElementById("cEmail").value=state.email||"";
+    renderPath(); show("path");
+    document.getElementById("saveInd").classList.add("on");
+  }
+})();
+</script>
+</body>
+</html>
