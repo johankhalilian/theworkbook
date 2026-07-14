@@ -148,7 +148,7 @@
       <input id="cEmail" type="email" placeholder="name@email.com" autocomplete="email">
     </div>
     <button class="btn wide" id="beginBtn">BEGIN THE WORK</button>
-    <p class="privacy">Your email keeps your work saved on this device so you can return anytime. No password needed.</p>
+    <p class="privacy">Your writing saves automatically as you go. Close the tab or step away anytime — you'll return right where you left off. No password needed.</p>
   </div>
 </section>
 
@@ -359,7 +359,7 @@ var WEEKS = [
 ];
 
 /* ---------- State ---------- */
-var state = { name:"", email:"", data:{}, done:{} };
+var state = { name:"", email:"", data:{}, done:{}, stepAt:{} };
 var current = { week:0, step:0 };
 var saveTimer=null;
 
@@ -377,12 +377,17 @@ function save(){
     localStorage.setItem("workbook:last", (state.email||"anon").toLowerCase());
   }catch(e){}
 }
+function setSaved(){
+  var el=document.getElementById("saveInd"); if(!el) return;
+  el.classList.add("on"); document.getElementById("saveTxt").textContent="All changes saved";
+}
 function flagSaving(){
   var el=document.getElementById("saveInd");
-  el.classList.remove("on"); document.getElementById("saveTxt").textContent="Saving…";
+  if(el){ el.classList.remove("on"); document.getElementById("saveTxt").textContent="Saving…"; }
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(function(){ save(); el.classList.add("on"); document.getElementById("saveTxt").textContent="Saved"; },500);
+  saveTimer=setTimeout(function(){ save(); setSaved(); },400);
 }
+function hardSave(){ clearTimeout(saveTimer); save(); setSaved(); }
 
 /* ---------- View switching ---------- */
 function show(id){
@@ -396,6 +401,19 @@ function show(id){
 function renderPath(){
   document.getElementById("greet").textContent = state.name ? ("Welcome back, "+state.name.split(" ")[0]+".") : "";
   var host=document.getElementById("weeksList"); host.innerHTML="";
+  var openIdx=-1;
+  for(var k=0;k<WEEKS.length;k++){ var pd=k===0||!!state.done[WEEKS[k-1].n]; if(!state.done[WEEKS[k].n]&&pd){ openIdx=k; break; } }
+  if(openIdx>-1){
+    var ow=WEEKS[openIdx]; var st=(state.stepAt&&state.stepAt["w"+ow.n])||0;
+    if(st>0){
+      var banner=document.createElement("button");
+      banner.className="wk open"; banner.style.marginBottom="6px";
+      banner.innerHTML='<div class="num">&#8618;</div><div class="meta"><div class="kick cap">CONTINUE WHERE YOU LEFT OFF</div>'+
+        '<div class="name">Week '+ow.n+' · '+ow.title+'</div><div class="status" style="opacity:.85">Pick up at step '+(st+1)+'</div></div><div class="chev">&#8250;</div>';
+      banner.onclick=(function(ix){ return function(){ openWeek(ix); }; })(openIdx);
+      host.appendChild(banner);
+    }
+  }
   WEEKS.forEach(function(w, i){
     var done = !!state.done[w.n];
     var prevDone = i===0 || !!state.done[WEEKS[i-1].n];
@@ -416,7 +434,10 @@ function numword(n){ return ["","ONE","TWO","THREE","FOUR","FIVE","SIX"][n]; }
 
 /* ---------- Week / steps ---------- */
 function openWeek(wi){
-  current.week=wi; current.step=0; show("week"); renderStep();
+  current.week=wi;
+  var w=WEEKS[wi]; var saved=(state.stepAt&&state.stepAt["w"+w.n])||0;
+  var max=totalSteps(w)-1; current.step=Math.min(Math.max(saved,0),max);
+  show("week"); renderStep();
 }
 function totalSteps(w){ return 1 + w.prompts.length; } /* reading + prompts */
 
@@ -424,6 +445,7 @@ function renderStep(){
   var w=WEEKS[current.week];
   var host=document.getElementById("stepHost");
   var steps=totalSteps(w);
+  if(!state.stepAt) state.stepAt={}; state.stepAt["w"+w.n]=current.step; save();
   var pct=Math.round((current.step/(steps-1))*100);
   var html='<div class="stepmeta"><span class="l cap">WEEK '+numword(w.n)+' · '+w.title+'</span><span class="r">'+(current.step+1)+' / '+steps+'</span></div>'+
            '<div class="progress"><i style="width:'+pct+'%"></i></div>';
@@ -497,11 +519,12 @@ function wireStep(w){
   var host=document.getElementById("stepHost");
   var next=document.getElementById("nextBtn"), back=document.getElementById("backBtn");
   if(next) next.onclick=function(){
+    hardSave();
     var steps=totalSteps(w);
     if(current.step===steps-1){ finishWeek(w); }
     else { current.step++; renderStep(); }
   };
-  if(back) back.onclick=function(){ if(current.step>0){ current.step--; renderStep(); } };
+  if(back) back.onclick=function(){ hardSave(); if(current.step>0){ current.step--; renderStep(); } };
 
   host.querySelectorAll('textarea[data-k]:not([data-f]):not([data-c]), input[data-k]:not([data-c])').forEach(function(el){
     if(el.hasAttribute("data-i")){ /* stem */
@@ -619,7 +642,7 @@ document.getElementById("beginBtn").onclick=function(){
   var existingRaw=null;
   try{ existingRaw=localStorage.getItem("workbook:"+email.toLowerCase()); }catch(e){}
   if(existingRaw){ state=JSON.parse(existingRaw); if(name) state.name=name; }
-  else { state={name:name, email:email, data:{}, done:{}}; }
+  else { state={name:name, email:email, data:{}, done:{}, stepAt:{}}; }
   save(); renderPath(); show("path");
 };
 document.getElementById("barBack").onclick=function(){ renderPath(); show("path"); };
@@ -632,6 +655,11 @@ document.getElementById("signout").onclick=function(){
     document.getElementById("cName").value=""; document.getElementById("cEmail").value=""; show("cover");
   }
 };
+
+window.addEventListener("beforeunload", function(){ try{ if(state&&state.email) save(); }catch(e){} });
+window.addEventListener("pagehide", function(){ try{ if(state&&state.email) save(); }catch(e){} });
+document.addEventListener("visibilitychange", function(){ if(document.hidden){ try{ if(state&&state.email) hardSave(); }catch(e){} } });
+setInterval(function(){ try{ if(state&&state.email) save(); }catch(e){} }, 5000);
 
 (function init(){
   if(load()){
